@@ -1,15 +1,13 @@
-rootProject.name = 'kwik'
+rootProject.name = "kwik"
 
-include('core')
-include('qlog')
-include('interop')
-include('cli')
-include('samples')
-include('h09')
+include("core", "qlog", "interop", "cli", "samples", "h09")
 
-project(":core").name = "kwik"
-project(":qlog").name = "kwik-qlog"
-project(":interop").name = "kwik-interop"
-project(":cli").name = "kwik-cli"
-project(":samples").name = "kwik-samples"
-project(":h09").name = "kwik-h09"
+// Nếu build từ ngoài (includeBuild) thì rename lại để dễ dùng
+if (gradle.parent != null) {
+    project(":core").name = "kwik-core"
+    project(":qlog").name = "kwik-qlog"
+    project(":interop").name = "kwik-interop"
+    project(":cli").name = "kwik-cli"
+    project(":samples").name = "kwik-samples"
+    project(":h09").name = "kwik-h09"
+}

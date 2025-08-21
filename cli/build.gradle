@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(':kwik')) // Add kwik core as a dependency
-    implementation(project(':kwik-h09')) // Add kwik core as a dependency
+    implementation(project.findProject(':kwik-core') ?: project(':core'))
+    implementation(project.findProject(':kwik-h09')  ?: project(':h09'))
 
     implementation group: 'tech.kwik', name: 'agent15', version: "$agent15_version"
 

@@ -52,7 +52,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
 public class InteractiveShell {
 
     private final Map<String, Consumer<String>> commands;
@@ -65,7 +64,8 @@ public class InteractiveShell {
     private HttpClient httpClient;
     private CompletableFuture<HttpResponse<Path>> currentHttpGetResult;
 
-    public InteractiveShell(QuicClientConnectionImpl.ExtendedBuilder builder, String alpn, KwikCli.HttpVersion httpVersion) {
+    public InteractiveShell(QuicClientConnectionImpl.ExtendedBuilder builder, String alpn,
+            KwikCli.HttpVersion httpVersion) {
         Objects.requireNonNull(builder);
         Objects.requireNonNull(alpn);
         this.builder = builder;
@@ -105,7 +105,8 @@ public class InteractiveShell {
 
     private void repeatLastCommand(String arg) {
         if (history.size() > 0) {
-            Map.Entry<String, String> lastCommand = history.entrySet().stream().reduce((first, second) -> second).orElse(null);
+            Map.Entry<String, String> lastCommand = history.entrySet().stream().reduce((first, second) -> second)
+                    .orElse(null);
             commands.get(lastCommand.getKey()).accept(lastCommand.getValue());
         }
     }
@@ -124,9 +125,10 @@ public class InteractiveShell {
                     // ^D => EOF => quit
                     break;
                 }
-                if (! cmdLine.isBlank()) {
+                if (!cmdLine.isBlank()) {
                     String cmd = cmdLine.split(" ")[0];
-                    List<String> matchingCommands = commands.keySet().stream().filter(command -> command.startsWith(cmd)).collect(Collectors.toList());
+                    List<String> matchingCommands = commands.keySet().stream()
+                            .filter(command -> command.startsWith(cmd)).collect(Collectors.toList());
                     if (matchingCommands.size() == 1) {
                         String matchingCommand = matchingCommands.get(0);
                         Consumer<String> commandFunction = commands.get(matchingCommand);
@@ -136,12 +138,10 @@ public class InteractiveShell {
                             if (!matchingCommand.startsWith("!")) {
                                 history.put(matchingCommand, commandArgs);
                             }
-                        }
-                        catch (Exception error) {
+                        } catch (Exception error) {
                             error(error);
                         }
-                    }
-                    else {
+                    } else {
                         unknown(cmd);
                     }
                 }
@@ -149,8 +149,7 @@ public class InteractiveShell {
                     prompt();
                 }
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("Error: " + e);
         }
     }
@@ -177,8 +176,7 @@ public class InteractiveShell {
 
             quicConnection.connect();
             System.out.println("Ok, connected to " + quicConnection.getUri() + "\n");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("\nError: " + e);
         }
     }
@@ -186,9 +184,9 @@ public class InteractiveShell {
     private void closed(ConnectionTerminatedEvent terminationEvent) {
         quicConnection = null;
         System.out.println("Connection terminated" +
-                (terminationEvent.closedByPeer()? " by peer: ": ": ") +
+                (terminationEvent.closedByPeer() ? " by peer: " : ": ") +
                 terminationEvent.closeReason() +
-                (terminationEvent.hasError()? " (" + terminationEvent.errorDescription() + ")": ""));
+                (terminationEvent.hasError() ? " (" + terminationEvent.errorDescription() + ")" : ""));
     }
 
     private void close(String arg) {
@@ -213,7 +211,8 @@ public class InteractiveShell {
                     .build();
 
             final Instant start = Instant.now();
-            CompletableFuture<HttpResponse<Path>> sendResult = httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofFile(createNewFile(arg).toPath()));
+            CompletableFuture<HttpResponse<Path>> sendResult = httpClient.sendAsync(request,
+                    HttpResponse.BodyHandlers.ofFile(createNewFile(arg).toPath()));
             CompletableFuture<Void> processResult = sendResult.thenAccept(response -> {
                 Instant done = Instant.now();
                 Duration duration = Duration.between(start, done);
@@ -221,19 +220,18 @@ public class InteractiveShell {
                 try {
                     long size = Files.size(response.body());
                     speed = String.format("%.2f", ((float) size) / duration.toMillis() / 1000);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     speed = "?";
                 }
-                System.out.println(String.format("Get requested finished in %.2f sec (%s MB/s) : %s", ((float) duration.toMillis())/1000, speed, response));
+                System.out.println(String.format("Get requested finished in %.2f sec (%s MB/s) : %s",
+                        ((float) duration.toMillis()) / 1000, speed, response));
             });
             processResult.exceptionally(error -> {
                 System.out.println("Error: " + error);
                 return null;
             });
             currentHttpGetResult = sendResult;
-        }
-        catch (IOException | URISyntaxException e) {
+        } catch (IOException | URISyntaxException e) {
             System.out.println("Error: " + e);
         }
     }
@@ -248,12 +246,12 @@ public class InteractiveShell {
         }
         baseName = baseName.replace('/', '_');
         File file = new File(baseName + ".dat");
-        if (! file.exists()) {
+        if (!file.exists()) {
             return file;
         }
         for (int i = 0; i < 1000; i++) {
             file = new File(baseName + i + ".dat");
-            if (! file.exists()) {
+            if (!file.exists()) {
                 return file;
             }
         }
@@ -262,7 +260,7 @@ public class InteractiveShell {
 
     private void newConnectionIds(String args) {
         int newConnectionIdCount = 1;
-        int retirePriorTo = 0;  // i.e. no retirement.
+        int retirePriorTo = 0; // i.e. no retirement.
 
         if (!args.isEmpty()) {
             try {
@@ -272,7 +270,8 @@ public class InteractiveShell {
                     retirePriorTo = (int) intArgs[1];
                 }
             } catch (NumberFormatException notANumber) {
-                System.out.println("Expected arguments: [<number of new ids>] [<sequence number to retire cids prior to>]");
+                System.out.println(
+                        "Expected arguments: [<number of new ids>] [<sequence number to retire cids prior to>]");
                 return;
             }
         }
@@ -299,10 +298,14 @@ public class InteractiveShell {
 
     private String toString(ConnectionIdStatus connectionIdStatus) {
         switch (connectionIdStatus) {
-            case NEW: return " ";
-            case IN_USE: return "*";
-            case USED: return ".";
-            case RETIRED: return "x";
+            case NEW:
+                return " ";
+            case IN_USE:
+                return "*";
+            case USED:
+                return ".";
+            case RETIRED:
+                return "x";
             default:
                 // Impossible
                 throw new RuntimeException("");
@@ -313,8 +316,7 @@ public class InteractiveShell {
         byte[] newConnectionId = quicConnection.nextDestinationConnectionId();
         if (newConnectionId != null) {
             System.out.println("Switched to next destination connection id: " + Bytes.bytesToHex(newConnectionId));
-        }
-        else {
+        } else {
             System.out.println("Cannot switch to next destination connect id, because there is none available");
         }
     }
@@ -349,15 +351,13 @@ public class InteractiveShell {
 
     private void setClientParameter(String argLine) {
         String[] args = argLine.split("\\s+");
-        String name = args.length >= 1? args[0] : null;
+        String name = args.length >= 1 ? args[0] : null;
         if (args.length == 2) {
             String value = args[1];
             setClientParameter(name, value);
-        }
-        else if (args.length == 1 && name.equals("datagram")) {
+        } else if (args.length == 1 && name.equals("datagram")) {
             setClientParameter(name, null);
-        }
-        else {
+        } else {
             System.out.println("Incorrect parameters; should be <transport parameter name> <value>.");
             System.out.println("Supported parameters: ");
             printSupportedParameters();
@@ -404,7 +404,8 @@ public class InteractiveShell {
                 builder.enforceMaxUdpPayloadSize(true);
                 params.maxUdpPayloadSize = toInt(value);
                 if (toInt(value) > Receiver.MAX_DATAGRAM_SIZE) {
-                    System.out.println(String.format("Warning: client will read at most %d datagram bytes", Receiver.MAX_DATAGRAM_SIZE));
+                    System.out.println(String.format("Warning: client will read at most %d datagram bytes",
+                            Receiver.MAX_DATAGRAM_SIZE));
                 }
                 break;
             case "strict":
@@ -423,8 +424,7 @@ public class InteractiveShell {
         if (quicConnection != null) {
             TransportParameters parameters = quicConnection.getPeerTransportParameters();
             System.out.println("Server transport parameters: " + parameters);
-        }
-        else {
+        } else {
             System.out.println("Server transport parameters still unknown (no connection)");
         }
     }
@@ -438,9 +438,11 @@ public class InteractiveShell {
     private void sendRaw(String arguments) {
         arguments += " ";
         String firstArg = arguments.substring(0, arguments.indexOf(" ")).toLowerCase();
-        if (! firstArg.equals("frame")) {
-            System.err.println("Command syntax: raw frame <data>, where <data> is a mix of hex bytes and 'varint <decimal number>'");
-            System.err.println("For example: \"raw frame 0e 0000 varint 4 cafebabe\" sends a stream frame with stream id 0, offset 0, length 4 and data cafebabe");
+        if (!firstArg.equals("frame")) {
+            System.err.println(
+                    "Command syntax: raw frame <data>, where <data> is a mix of hex bytes and 'varint <decimal number>'");
+            System.err.println(
+                    "For example: \"raw frame 0e 0000 varint 4 cafebabe\" sends a stream frame with stream id 0, offset 0, length 4 and data cafebabe");
             return;
         }
 
@@ -452,7 +454,8 @@ public class InteractiveShell {
         byte[] rawDataBytes = new byte[rawData.limit()];
         rawData.get(rawDataBytes);
         RawFrame rawFrame = new RawFrame(rawDataBytes);
-        quicConnection.send(rawFrame, f -> {}, true);
+        quicConnection.send(rawFrame, f -> {
+        }, true);
     }
 
     private void convertRawArgsToBytes(String argumentLine, ByteBuffer buffer) {
@@ -460,17 +463,15 @@ public class InteractiveShell {
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("varint")) {
                 if (i + 1 < args.length) {
-                    String integer = args[i+1];
+                    String integer = args[i + 1];
                     i += 1;
                     if (integer.matches("\\d+")) {
                         VariableLengthInteger.encode(Integer.parseInt(integer), buffer);
-                    }
-                    else {
+                    } else {
                         System.err.println("varint argument must be a (decimal) integer");
                     }
                 }
-            }
-            else {
+            } else {
                 buffer.put(ByteUtils.hexToBytes(args[i]));
             }
         }
@@ -487,10 +488,10 @@ public class InteractiveShell {
 
     private void quack(String s) {
         if (quicConnection.isDatagramExtensionEnabled()) {
-            quicConnection.setDatagramHandler(data -> System.out.println("Received datagram: \"" + new String(data) + "\""));
+            quicConnection
+                    .setDatagramHandler(data -> System.out.println("Received datagram: \"" + new String(data) + "\""));
             quicConnection.sendDatagram("quack".getBytes());
-        }
-        else {
+        } else {
             System.out.println("Error: datagram extension not enabled");
         }
     }
@@ -534,8 +535,10 @@ public class InteractiveShell {
 
         @Override
         public String toString() {
-            return "idle=" + maxIdleTimeout + " (seconds)\ncids=" + activeConnectionIdLimit + "\nmaxStreamData=" + defaultStreamReceiveBufferSize +
-                    "\nmaxUni=" + maxOpenPeerInitiatedUnidirectionalStreams + "\nmaxBidi=" + maxOpenPeerInitiatedBidirectionalStreams +
+            return "idle=" + maxIdleTimeout + " (seconds)\ncids=" + activeConnectionIdLimit + "\nmaxStreamData="
+                    + defaultStreamReceiveBufferSize +
+                    "\nmaxUni=" + maxOpenPeerInitiatedUnidirectionalStreams + "\nmaxBidi="
+                    + maxOpenPeerInitiatedBidirectionalStreams +
                     "\npayload=" + maxUdpPayloadSize;
         }
     }

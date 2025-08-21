@@ -10,11 +10,13 @@ plugins {
 group = 'tech.kwik'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
     withJavadocJar()
     withSourcesJar()
 }
+
 
 javadoc {
     options.addStringOption('Xdoclint:none', '-quiet')
